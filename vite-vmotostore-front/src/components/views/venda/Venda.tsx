@@ -1,25 +1,34 @@
 
 'use client';
 
-import { Alert } from '@mui/material';
+import { Alert, ButtonGroup, Container, Grid } from '@mui/material';
 import axios from 'axios';
-import { Card } from 'flowbite-react';
+import { Button, Card, Label, TextInput } from 'flowbite-react';
 import { Badge } from 'flowbite-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import FormatadorMonetario from '../../../utils/MonetarioUtil';
+import DateUtil from '../../../utils/DateUtils';
 
 
 function VendaView() {
+
+    let dataHoje = new Date(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())).toISOString().slice(0, 10);
+
     let [itensVenda, setItensVenda] = useState([]);
+    let [dataInicio, setDataInicio] = useState(dataHoje);
+    let [dataFim, setDataFim] = useState('');
 
     useEffect(() => {
         // Função para buscar os dados do banco de dados
         const getVendas = async () => {
             try {
-                const response = await axios.get('http://localhost:3000/venda'); // Substitua pela URL da sua API
+                const hoje = new Date(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())).toISOString().slice(0, 10);
+                const dadosDoFormulario = { dataInicio: hoje, dataFim: '' };
+                const response = await axios.post('http://localhost:3000/venda/filtro', dadosDoFormulario);
+                
                 setItensVenda(response.data); // Atualize o estado com os dados recuperados
-                console.log(response.data);
+
             } catch (error: any) {
                 return (<Alert severity="error">{error}</Alert>)
             }
@@ -43,22 +52,111 @@ function VendaView() {
             }
         } catch (error: any) {
             console.log(error);
-            alert(error);
         }
 
 
     }
 
+    let pesquisar = async () => {
+
+        try {
+            const dadosDoFormulario = { dataInicio: dataInicio, dataFim: dataFim };
+            const response = await axios.post('http://localhost:3000/venda/filtro', dadosDoFormulario);
+            setItensVenda(response.data);
+
+        } catch (error: any) {
+            console.log(error);
+        }
+    }
+
+
+
+    const estiloCentro = {
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center' // Define o alinhamento horizontal como centro
+    };
+
     return (<>
-        <Card
-            className=""
+        <Card className=""
             href="#"
         >
             <h5 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                <p>
-                    Vendas do dia: {new Date().toLocaleDateString()}
+                <p style={estiloCentro}>
+                    Vendas
                 </p>
             </h5>
+
+            <Card >
+                <Container maxWidth="xl">
+                    <form className="">
+                        <div className="grid gap-6 mb-2 md:grid-cols-3">
+                            <div className="mb-2 block">
+                                <Label
+                                    htmlFor="dataInicio"
+                                    value="Data Inícial"
+                                />
+                                <TextInput
+                                    id="dataInicio"
+                                    name='dataInicio'
+                                    required
+                                    shadow
+                                    placeholder=''
+                                    type="date"
+                                    value={dataInicio}
+                                    onChange={(e: any) => {
+                                        setDataInicio(e.target.value);
+                                    }}
+
+                                />
+                            </div>
+                            <div className="mb-2 block">
+                                <Label
+                                    htmlFor="dataFim"
+                                    value="Data Final"
+                                />
+
+                                <TextInput
+                                    id="dataFim"
+                                    required
+                                    shadow
+                                    placeholder=''
+                                    type="date"
+                                    name='dataFim'
+                                    onChange={(e: any) => {
+                                        setDataFim(e.target.value);
+                                    }}
+
+                                />
+                            </div>
+
+
+                            <div className="mb-2 block">
+                                <br />
+                                <ButtonGroup variant="contained" aria-label="outlined primary button group">
+
+
+                                    <Button type='button' onClick={pesquisar}  >Pesquisar</Button>
+                                </ButtonGroup>
+
+                            </div>
+                        </div>
+
+
+
+
+                        <div className="mb-2 block"></div>
+
+
+
+                        <div className="grid gap-6 mb-6 md:grid-cols-2">
+
+
+
+                        </div>
+                    </form>
+                </Container>
+            </Card>
 
             <Link to="/venda/cadastrar" className="inline-flex w-full justify-center rounded-lg bg-cyan-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-cyan-700 focus:outline-none focus:ring-4 focus:ring-cyan-200 dark:focus:ring-cyan-900">Nova Venda</Link>
 
@@ -68,9 +166,11 @@ function VendaView() {
                 {(itensVenda !== null && itensVenda !== undefined && itensVenda.length > 0) ? itensVenda.map((item: any, index: number) => {
                     return (
                         <Card key={item._id}>
+                            <Badge color="gray">{DateUtil.getDataHoraFormatadaToString(item.criadoEm)}</Badge>
                             {item.status === 'aberto' ? <><Badge color="success">Aberto</Badge></> :
-                                item.status === 'finalizado' ? <><Badge color="info">Finalizado</Badge></> : <></>
+                                item.status === 'finalizado' ? <><Badge color="info">Finalizado</Badge></> : <><Badge color="failure">Cancelado</Badge></>
                             }
+
                             <h5 className="mb-4 text-xl font-medium text-gray-500 dark:text-gray-400">
                                 {item.cliente?.nome}
                             </h5>

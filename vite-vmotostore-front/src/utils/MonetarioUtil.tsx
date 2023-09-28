@@ -30,6 +30,14 @@ class FormatadorMonetario {
         }
     }
 
+    //"R$ 13.231.123,29"
+    static stringMonetariaToNumber(monetario: string) {
+        let stringMonetaria = monetario.replace('[^0-9,]gm', "");
+        stringMonetaria = stringMonetaria.replace(',', ".");
+        const number = parseFloat(stringMonetaria);
+        return isNaN(number) ? null : number;
+    }
+
 }
 
 export default FormatadorMonetario;

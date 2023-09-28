@@ -10,7 +10,7 @@ function App() {
     <>
       <Header></Header>
 
-      <div id='content'  className="flex items-center justify-center">
+      <div id='content' className="flex items-center justify-center">
 
         <AppRoutes></AppRoutes>
 

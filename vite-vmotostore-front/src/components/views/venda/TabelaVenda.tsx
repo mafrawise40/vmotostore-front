@@ -84,7 +84,7 @@ export default function TabelaVenda(props: any) {
                         return (
                             <Table.Row key={item.produto._id} className="bg-white dark:border-gray-700 dark:bg-gray-800">
                                 <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                                    {item.produto?.nome}
+                                    {item.produto?.nome + ' - ' + item.produto?.aplicacao}
                                 </Table.Cell>
                                 <Table.Cell>
                                     {item.quantidade} <button onClick={() => handleClickOpen(item.quantidade, item.produto._id)} type='button'  ><AddBoxIcon color='success'></AddBoxIcon></button>

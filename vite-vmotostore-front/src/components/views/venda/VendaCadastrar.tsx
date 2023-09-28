@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import FormatadorMonetario from '../../../utils/MonetarioUtil';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Alert, Snackbar } from '@mui/material';
+import { Alert, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, TextField } from '@mui/material';
 import React from 'react';
 
 
@@ -54,6 +54,16 @@ function VendaCadastrarView() {
     let [itens, setItens] = useState([]);
     let [itensTabela, setItensTabela] = useState<ProdutoVenda[]>([]);
     let [status, seStatus] = useState('aberto');
+    const [valor, setValor] = useState('');
+    const [formulario, setFormulario] = useState({
+        cliente: '',
+        telefone: '',
+        modeloMoto: '',
+        total: 0,
+        desconto: 0,
+        formaPagamento: '',
+        observacao: ''
+    });
 
 
     const handleCallback = (childData: any) => {
@@ -94,29 +104,35 @@ function VendaCadastrarView() {
     }
 
 
-    const aplicarDesconto = (event: any | number) => {
-
-        let value = null;
-        if (typeof event === "number") {
-            value = event;
+    const aplicarDesconto = (desconto: any | number, valorTotalTabela: number | null) => {
+        let value: any | number = null;
+        if (typeof desconto === "number") {
+            value = desconto;
         } else {
-            somentePositivo(event);
-            value = FormatadorMonetario.stringToNumber(event.target?.value);
+            somentePositivo(desconto);
+            value = FormatadorMonetario.stringToNumber(desconto.target?.value);
         }
 
 
-
-
-        let valorTotalTableNovo = valorTotalTable;
         if (value != 0 || value > 0) {
-            setValorTotal(valorTotalTable - Number(value));
+            if (valorTotalTabela != null) {
+                let novoValor = valorTotalTabela - value;
+                setValorTotal(novoValor);
+            } else {
+                setValorTotal(valorTotalTable - Number(value));
+            }
+
         } else {
-            setValorTotal(valorTotalTable);
+            if (valorTotalTabela != null) {
+                setValorTotal(valorTotalTabela);
+            } else {
+                setValorTotal(valorTotalTable);
+            }
         }
 
     }
 
-    const [valor, setValor] = useState('');
+
     const somentePositivo = (e: any) => {
         const novoValor = e.target.value;
         // Verifica se o novo valor é um número positivo ou uma string vazia
@@ -125,13 +141,6 @@ function VendaCadastrarView() {
         }
     };
 
-    const [formulario, setFormulario] = useState({
-        cliente: '',
-        telefone: '',
-        modeloMoto: '',
-        total: 0,
-        desconto: 0
-    });
 
     const tratarDadosForm = (event: any) => {
         const { name, value } = event.target;
@@ -142,10 +151,8 @@ function VendaCadastrarView() {
     };
 
 
-
     const processarSalvar = async (e: any, isFinalizar: boolean) => {
         e.preventDefault();
-
 
         try {
 
@@ -156,7 +163,10 @@ function VendaCadastrarView() {
                 valorTotal: Number(valorTotal.toString().replace(",", ".")).toFixed(2), // O valor atualizado
                 desconto: Number(formulario.desconto.toString().replace(",", ".")).toFixed(2),
                 produtos: itensTabela,
-                status: status
+                status: status,
+                formaPagamento: formulario.formaPagamento,
+                observacao: formulario.observacao
+
             };
 
             if (isFinalizar) {
@@ -188,7 +198,9 @@ function VendaCadastrarView() {
 
 
 
-
+    /**
+     * Msg de sucesso
+     */
     const [open, setOpen] = React.useState(false);
 
     const handleClick = () => {
@@ -203,7 +215,87 @@ function VendaCadastrarView() {
         setOpen(false);
     };
 
-    //FIXME -- ESTÁ FAZENDO VÁRIAS PESQUISAS  TODA HORA...
+    /**
+     * Dialogo
+     */
+    const [openDialog, setOpenDialog] = React.useState(false);
+
+    const handleClickOpenDialog = () => {
+        setOpenDialog(true);
+    };
+
+    const handleCloseDialog = () => {
+        setOpenDialog(false);
+    };
+
+    const getDialogo = (operacao: string) => {
+
+
+        return (<Dialog open={openDialog} onClose={handleCloseDialog}>
+            <DialogTitle>{operacao} Venda </DialogTitle>
+            <DialogContent>
+
+                {operacao === 'Finalizar' ? <>
+                    <DialogContentText>
+                        {formulario?.cliente && 'Cliente: ' + formulario?.cliente}
+                        <br />
+                        {valorTotal && 'Total ' + FormatadorMonetario.formatarValorMonetario(valorTotal, "R$")}
+                    </DialogContentText>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        id="formaPagamento"
+                        label="Forma de Pagamento"
+                        name='formaPagamento'
+                        type="text"
+                        fullWidth
+                        variant="standard"
+                        onChange={tratarDadosForm}
+                    />
+
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        id="observacao"
+                        name='observacao'
+                        label="Obrservação"
+                        type="text"
+                        fullWidth
+                        variant="standard"
+                        onChange={tratarDadosForm}
+                    />
+                </>
+                    : <>
+                        <DialogContentText>
+                            Motivo do Cancelamento
+                        </DialogContentText>
+
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            id="observacao"
+                            name='observacao'
+                            label="Obrservação"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            onChange={tratarDadosForm}
+                        /></>}
+
+
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleCloseDialog}>Cancel</Button>
+                {operacao === 'Finalizar' ? <><Button onClick={() => { processarSalvar(event, true); }}>Confirmar</Button></>
+                    :
+                    <><Button onClick={() => { cancelarVenda(); }}>Confirmar</Button></>
+                }
+            </DialogActions>
+        </Dialog>)
+
+    }
+
+
     useEffect(() => {
         // Função para buscar os dados do banco de dados
         const buscarDados = async () => {
@@ -211,15 +303,11 @@ function VendaCadastrarView() {
 
                 const response = await axios.get('http://localhost:3000/produto'); // Substitua pela URL da sua API
                 setItens(response.data); // Atualize o estado com os dados recuperados
-                atualizarValorTabela();
-
 
             } catch (error: any) {
                 return (<Alert severity="error">{error}</Alert>)
             }
         };
-
-
 
         buscarDados();
         //  buscarDadosVenda(); // Chame a função para buscar os dados quando o componente for montado
@@ -234,44 +322,99 @@ function VendaCadastrarView() {
                     const response = await axios.get('http://localhost:3000/venda/' + parametro.id);
 
                     let arraNovo: any = [];
+                    let valorTotalTabelaResponse = 0;
                     response.data.produtos.forEach((produto: { produto: { precoVenda: any; }; quantidade: any; }) => {
+
                         arraNovo.push({
                             produto: produto.produto,
                             quantidade: produto.quantidade,
                             valor: produto.produto.precoVenda
-                        })
+                        });
+                        valorTotalTabelaResponse += produto.quantidade * produto.produto.precoVenda;
                     });
 
                     setItensTabela(arraNovo);
-
-
-                    //FIXME está gerando um waring aqui
+                    setValorTotalTable(valorTotalTabelaResponse);
                     setFormulario({
-                        cliente: response.data.cliente.nome,
-                        telefone: response.data.cliente.telefone,
-                        desconto: response.data.descontoNoValorTotal,
-                        modeloMoto: response.data.modeloMoto,
-                        total: response.data.valorTotal
+                        cliente: response.data?.cliente?.nome || '',
+                        telefone: response.data.cliente?.telefone || '',
+                        desconto: response.data?.descontoNoValorTotal || 0.00,
+                        modeloMoto: response.data?.modeloMoto || '',
+                        total: response.data?.valorTotal || 0.00,
+                        formaPagamento: response.data?.formaPagamento || '',
+                        observacao: response.data?.observacao || ''
 
                     });
+
+
                     setValor(response.data.descontoNoValorTotal);
                     setValorTotal(response.data.valorTotal);
+
                     if (response.status) {
                         seStatus(response.data.status);
                     }
-                    aplicarDesconto(response.data.descontoNoValorTotal);
+
+                    aplicarDesconto(response.data.descontoNoValorTotal, valorTotalTabelaResponse);
 
                 }
             } catch (error: any) {
-                console.log(error);
             }
         };
         buscarDadosVenda();
     }, [parametro.id]);
 
 
+    const getBotaoFinalizar = () => {
+        if (status != 'finalizado' && status != 'cancelado') {
+            return (<Button type='button' color="success" onClick={(event) => {
+                handleClickOpenDialog();
+            }} >Finalizar Venda</Button>);
+        }
+    }
+
+    const getBotaoSalvar = () => {
+        if (status != 'finalizado' && status != 'cancelado') {
+            return (<Button type='button' onClick={(event) => {
+                processarSalvar(event, false);
+            }} color="primary">Salvar</Button>);
+        }
+    }
+
+    const getBotaoCancelar = () => {
+        if ( status != 'cancelado' && ( parametro.id != null && parametro.id != undefined)) {
+            return (<Button type='button' onClick={() => {
+                handleClickOpenCancelarVenda();
+            }} color="error" >Cancelar</Button>);
+        }
+    }
 
 
+
+    const cancelarVenda = async () => {
+
+        if (parametro.id != null && parametro.id != undefined) {
+            try {
+                const dadosDoFormulario = { observacao: formulario.observacao };
+                const response = await axios.post('http://localhost:3000/venda/' + parametro.id + '/cancelar', dadosDoFormulario);
+
+                if (response.status == 201) {
+                    alert('Venda Cancelada com sucesso');
+                    setOpenCancelarDialogo(false);
+                }
+            } catch (error: any) {
+                console.log(error);
+            }
+        }
+    }
+
+    const [openCancelarDialogo, setOpenCancelarDialogo] = React.useState(false);
+    const handleClickOpenCancelarVenda = () => {
+        setOpenCancelarDialogo(true);
+    };
+
+    const handleCloseCancelarVenda = () => {
+        setOpenCancelarDialogo(false);
+    };
 
     return (<>
         <Card style={{ 'width': '100%' }} >
@@ -296,7 +439,7 @@ function VendaCadastrarView() {
                                 placeholder='Digite o nome do cliente'
                                 type="text"
                                 onChange={tratarDadosForm}
-                                value={formulario.cliente}
+                                value={formulario?.cliente}
                             />
                         </div>
                         <div className="mb-2 block">
@@ -313,7 +456,7 @@ function VendaCadastrarView() {
                                 type="text"
                                 name='telefone'
                                 onChange={tratarDadosForm}
-                                value={formulario.telefone}
+                                value={formulario?.telefone}
                             />
                         </div>
                     </div>
@@ -332,7 +475,7 @@ function VendaCadastrarView() {
                                 type="modeloMoto"
                                 name='modeloMoto'
                                 onChange={tratarDadosForm}
-                                value={formulario.modeloMoto}
+                                value={formulario?.modeloMoto}
                             />
                         </div>
 
@@ -343,7 +486,7 @@ function VendaCadastrarView() {
                             />
                             {status === 'aberto' ? <><Badge color="success">Aberto</Badge></> :
                                 status === 'finalizado' ? <><Badge color="info">Finalizado</Badge></> :
-                                    status === 'cancelado' ? <><Badge color="error">Cancelada</Badge></> : <></>
+                                    status === 'cancelado' ? <><Badge color="failure">Cancelada</Badge></> : <></>
                             }
 
                         </div>
@@ -385,10 +528,10 @@ function VendaCadastrarView() {
                                 placeholder='R$: 00,00'
                                 type="text"
                                 onChange={(event) => {
-                                    aplicarDesconto(event); // Chama a primeira função
+                                    aplicarDesconto(event, null); // Chama a primeira função
                                     tratarDadosForm(event); // Chama a segunda função
                                 }}
-                                value={FormatadorMonetario.formatarValorMonetario(valor, "R$")}
+                                value={valor}
                             />
                         </div>
 
@@ -428,19 +571,9 @@ function VendaCadastrarView() {
 
                         <div className="mb-2 block">
                             <ButtonGroup variant="contained" aria-label="outlined primary button group">
-
-                                <Button type='button' onClick={(event) => {
-                                    processarSalvar(event, false);
-                                }} color="primary">Salvar</Button>
-                                <Button type='button' color="success" onClick={(event) => {
-                                    processarSalvar(event, true);
-                                }} >Finalizar Venda</Button>
-
-                                <Button type='button' onClick={() => {
-                                    navigate('/venda');
-                                }} color="error" >Cancelar</Button>
-
-
+                                {getBotaoSalvar()}
+                                {getBotaoFinalizar()}
+                                {getBotaoCancelar()}
 
                             </ButtonGroup>
 
@@ -454,6 +587,60 @@ function VendaCadastrarView() {
                     </Alert>
                 </Snackbar>
 
+                <div>
+
+                    <Dialog open={openDialog} onClose={handleCloseDialog}>
+                        <DialogTitle>Finalizar Venda </DialogTitle>
+                        <DialogContent>
+                            <DialogContentText>
+                                {formulario?.cliente && 'Cliente: ' + formulario?.cliente}
+                                <br />
+                                {valorTotal && 'Total ' + FormatadorMonetario.formatarValorMonetario(valorTotal, "R$")}
+                            </DialogContentText>
+                            <TextField
+                                autoFocus
+                                margin="dense"
+                                id="formaPagamento"
+                                label="Forma de Pagamento"
+                                name='formaPagamento'
+                                type="text"
+                                fullWidth
+                                variant="standard"
+                                onChange={tratarDadosForm}
+                            />
+
+                            <TextField
+                                autoFocus
+                                margin="dense"
+                                id="observacao"
+                                name='observacao'
+                                label="Obrservação"
+                                type="text"
+                                fullWidth
+                                variant="standard"
+                                onChange={tratarDadosForm}
+                            />
+
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={handleCloseDialog}>Cancelar</Button>
+                            <Button onClick={() => { processarSalvar(event, true); }}>Confirmar</Button>
+                        </DialogActions>
+                    </Dialog>
+
+
+                    <div>
+                        <Dialog open={openCancelarDialogo} onClose={handleCloseCancelarVenda}>
+                            <DialogTitle>Deseja Realmente Cancelar a Venda ?</DialogTitle>
+                            <DialogContent></DialogContent>
+                            <DialogActions>
+                                <Button onClick={handleCloseCancelarVenda}>Cancelar</Button>
+                                <Button onClick={cancelarVenda}>Sim</Button>
+                            </DialogActions>
+                        </Dialog>
+                    </div>
+
+                </div>
             </Card>
         </Card>
     </>);
