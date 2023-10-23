@@ -1,17 +1,20 @@
 import { Box, Button, ButtonGroup, Typography } from "@mui/material";
 import { Card, Label, TextInput } from "flowbite-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import FormatadorMonetario from "../../../../utils/MonetarioUtil";
 
 function ProdutoCadastroFormView(props: any) {
     const navigate = useNavigate();
-
+    const parametro = useParams()
 
 
     const getBotaoCadastrar = () => {
         return (<Button type='button' onClick={(event) => {
             props.processarSalvar(event, false);
-        }} color="primary">Cadastrar</Button>);
+        }} color="primary">{parametro.id ? 'Salvar' : 'Cadastrar'}</Button>);
     }
+
+
 
 
 
@@ -46,7 +49,9 @@ function ProdutoCadastroFormView(props: any) {
                             shadow
                             placeholder='Digite o código do produto'
                             type="text"
+
                             onChange={props.tratarDadosForm}
+                            value={props.formulario?.codigo}
 
                         />
                     </div>
@@ -68,6 +73,7 @@ function ProdutoCadastroFormView(props: any) {
                             placeholder='Digite a descrição do produto'
                             type="text"
                             onChange={props.tratarDadosForm}
+                            value={props.formulario?.nome}
 
                         />
                     </div>
@@ -85,6 +91,7 @@ function ProdutoCadastroFormView(props: any) {
                             placeholder='Ex: CRF 230 2020, CB 250 twister 2018'
                             type="text"
                             onChange={props.tratarDadosForm}
+                            value={props.formulario?.aplicacao}
 
                         />
                     </div>
@@ -110,7 +117,9 @@ function ProdutoCadastroFormView(props: any) {
                             shadow
                             placeholder=''
                             type="text"
+                            onInput={FormatadorMonetario.mascaraMoeda}
                             onChange={props.tratarDadosForm}
+                            value={FormatadorMonetario.mascaraMoeda(props.formulario?.precoCompra || 0)}
 
                         />
                     </div>
@@ -131,7 +140,9 @@ function ProdutoCadastroFormView(props: any) {
                             shadow
                             placeholder=''
                             type="text"
+                            onInput={FormatadorMonetario.mascaraMoeda}
                             onChange={props.tratarDadosForm}
+                            value={FormatadorMonetario.mascaraMoeda(props.formulario?.precoVenda || 0)}
 
                         />
                     </div>
@@ -150,6 +161,7 @@ function ProdutoCadastroFormView(props: any) {
                             type="text"
                             style={{ 'width': '100px' }}
                             onChange={props.tratarDadosForm}
+                            value={props.formulario?.quantidade}
 
                         />
                     </div>
@@ -172,6 +184,7 @@ function ProdutoCadastroFormView(props: any) {
                             placeholder=''
                             type="text"
                             onChange={props.tratarDadosForm}
+                            value={props.formulario?.fornecedor}
 
                         />
                     </div>

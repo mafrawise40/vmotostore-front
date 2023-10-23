@@ -87,7 +87,7 @@ export default function Asynchronous(props: any) {
                 <TextField className=''
                     {...params}
 
-                    label="Pesquisar Produtos"
+                    label="Pesquisar Produtos e Serviços"
                     InputProps={{
                         ...params.InputProps,
                         endAdornment: (

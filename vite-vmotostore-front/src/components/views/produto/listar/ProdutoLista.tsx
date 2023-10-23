@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import ProdutoListaComponentsView from "./ProdutoListaComponents";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Auth from "../../../../utils/AuthUtils";
 
 function ProdutoListaView() {
     const navigate = useNavigate();
@@ -10,7 +11,21 @@ function ProdutoListaView() {
 
 
     const deletarProduto = async (id: string) => {
-        console.log('deletando' + id);
+        try {
+
+            const response = await axios.delete(`${import.meta.env.VITE_URL_BACK_NODE}/produto/` + id , Auth.getHeaderAuth());
+            if (response.status === 201) {
+                alert("regostro deletado");
+                window.location.reload();
+            } else {
+                console.log(response);
+                alert(response?.data.message);
+            }
+
+        } catch (error: any) {
+            alert(error?.data.message);
+            console.log(error);
+        }
     }
 
     const irPaginaEditarProduto = async (id: string) => {
@@ -22,7 +37,7 @@ function ProdutoListaView() {
         const getProdutos = async () => {
             try {
 
-                const response = await axios.get('http://localhost:3000/produto');
+                const response = await axios.get(`${import.meta.env.VITE_URL_BACK_NODE}/produto` , Auth.getHeaderAuth());
                 setProdutos(response.data); // Atualize o estado com os dados recuperados
 
             } catch (error: any) {

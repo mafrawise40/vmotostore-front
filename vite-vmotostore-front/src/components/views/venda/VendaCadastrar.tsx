@@ -10,14 +10,19 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import FormatadorMonetario from '../../../utils/MonetarioUtil';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Alert, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, TextField } from '@mui/material';
+import { Alert, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, SnackbarOrigin, TextField } from '@mui/material';
 import React from 'react';
+import DateUtil from '../../../utils/DateUtils';
+import Auth from '../../../utils/AuthUtils';
+import ProdutoRapidoBtn from '../produto/cadastrar/mao-de-obra/ProdutoRapidoBtn';
 
 
 function VendaCadastrarView() {
 
     const navigate = useNavigate();
     const parametro = useParams();
+
+    const isEdicao = (parametro.id !== undefined && parametro.id !== null);
 
 
     class Venda {
@@ -62,7 +67,8 @@ function VendaCadastrarView() {
         total: 0,
         desconto: 0,
         formaPagamento: '',
-        observacao: ''
+        observacao: '',
+        criadoEm: new Date()
     });
 
 
@@ -153,8 +159,9 @@ function VendaCadastrarView() {
 
     const processarSalvar = async (e: any, isFinalizar: boolean) => {
         e.preventDefault();
-
+        setMsgErro('');
         try {
+            let response = null;
 
             let dadosDoFormulario = {
                 cliente: formulario.cliente,
@@ -169,27 +176,52 @@ function VendaCadastrarView() {
 
             };
 
+
+
+
+            if (formulario.telefone.length < 8) {
+                setMsgErro('Telefone inválido');
+                setState({ vertical: 'top', horizontal: 'center', open: true });
+                return;
+            }
+
+            if (formulario.cliente.length < 4) {
+                setMsgErro('Nome do cliente inválido');
+                setState({ vertical: 'top', horizontal: 'center', open: true });
+                return;
+            }
+
+
+
             if (isFinalizar) {
+
+                if (itensTabela.length <= 0) {
+                    setMsgErro('Não é possível finalizar venda sem produto lançado.');
+                    setState({ vertical: 'top', horizontal: 'center', open: true });
+                    return;
+                }
+
                 dadosDoFormulario.status = 'finalizado';
             }
 
-            let response = null;
+
 
             if (parametro.id) {
-                response = await axios.put('http://localhost:3000/venda/' + parametro.id, dadosDoFormulario); // Substitua pela URL da sua API
+                response = await axios.put(`${import.meta.env.VITE_URL_BACK_NODE}/venda/` + parametro.id, dadosDoFormulario, Auth.getHeaderAuth()); // Substitua pela URL da sua API
             } else {
-                response = await axios.post('http://localhost:3000/venda', dadosDoFormulario);
+                response = await axios.post(`${import.meta.env.VITE_URL_BACK_NODE}/venda`, dadosDoFormulario, Auth.getHeaderAuth());
             }
 
 
             if (response && response.status == 201) {
-                handleClick();
                 navigate('/venda');
             }
 
 
         } catch (error: any) {
-            return (<Alert severity="error">Erro ao processar o formulário {error}</Alert>)
+            setMsgErro(error);
+            setState({ vertical: 'top', horizontal: 'center', open: true });
+            console.log(error)
 
         }
 
@@ -199,12 +231,22 @@ function VendaCadastrarView() {
 
 
     /**
-     * Msg de sucesso
+     * Msg de Erro
      */
-    const [open, setOpen] = React.useState(false);
+    interface State extends SnackbarOrigin {
+        open: boolean;
+    }
 
-    const handleClick = () => {
-        setOpen(true);
+    const [msgErro, setMsgErro] = React.useState('');
+    const [state, setState] = React.useState<State>({
+        open: false,
+        vertical: 'top',
+        horizontal: 'center',
+    });
+    const { vertical, horizontal, open } = state;
+
+    const handleClick = (newState: SnackbarOrigin) => () => {
+        setState({ ...newState, open: true });
     };
 
     const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
@@ -212,7 +254,7 @@ function VendaCadastrarView() {
             return;
         }
 
-        setOpen(false);
+        setState({ ...state, open: false });
     };
 
     /**
@@ -286,7 +328,10 @@ function VendaCadastrarView() {
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleCloseDialog}>Cancel</Button>
-                {operacao === 'Finalizar' ? <><Button onClick={() => { processarSalvar(event, true); }}>Confirmar</Button></>
+                {operacao === 'Finalizar' ? <><Button onClick={() => {
+                    //processarValidacaoForm(event);
+                    processarSalvar(event, true);
+                }}>Confirmar</Button></>
                     :
                     <><Button onClick={() => { cancelarVenda(); }}>Confirmar</Button></>
                 }
@@ -301,7 +346,7 @@ function VendaCadastrarView() {
         const buscarDados = async () => {
             try {
 
-                const response = await axios.get('http://localhost:3000/produto'); // Substitua pela URL da sua API
+                const response = await axios.get(`${import.meta.env.VITE_URL_BACK_NODE}/produto`, Auth.getHeaderAuth()); // Substitua pela URL da sua API
                 setItens(response.data); // Atualize o estado com os dados recuperados
 
             } catch (error: any) {
@@ -319,7 +364,7 @@ function VendaCadastrarView() {
         const buscarDadosVenda = async () => {
             try {
                 if (parametro.id) {
-                    const response = await axios.get('http://localhost:3000/venda/' + parametro.id);
+                    const response = await axios.get(`${import.meta.env.VITE_URL_BACK_NODE}/venda/` + parametro.id, Auth.getHeaderAuth());
 
                     let arraNovo: any = [];
                     let valorTotalTabelaResponse = 0;
@@ -342,7 +387,8 @@ function VendaCadastrarView() {
                         modeloMoto: response.data?.modeloMoto || '',
                         total: response.data?.valorTotal || 0.00,
                         formaPagamento: response.data?.formaPagamento || '',
-                        observacao: response.data?.observacao || ''
+                        observacao: response.data?.observacao || '',
+                        criadoEm: response.data?.criadoEm || ''
 
                     });
 
@@ -381,7 +427,7 @@ function VendaCadastrarView() {
     }
 
     const getBotaoCancelar = () => {
-        if ( status != 'cancelado' && ( parametro.id != null && parametro.id != undefined)) {
+        if (status != 'cancelado' && (parametro.id != null && parametro.id != undefined)) {
             return (<Button type='button' onClick={() => {
                 handleClickOpenCancelarVenda();
             }} color="error" >Cancelar</Button>);
@@ -395,11 +441,12 @@ function VendaCadastrarView() {
         if (parametro.id != null && parametro.id != undefined) {
             try {
                 const dadosDoFormulario = { observacao: formulario.observacao };
-                const response = await axios.post('http://localhost:3000/venda/' + parametro.id + '/cancelar', dadosDoFormulario);
+                const response = await axios.post(`${import.meta.env.VITE_URL_BACK_NODE}/venda/` + parametro.id + '/cancelar', dadosDoFormulario, Auth.getHeaderAuth());
 
                 if (response.status == 201) {
                     alert('Venda Cancelada com sucesso');
                     setOpenCancelarDialogo(false);
+                    navigate('/venda');
                 }
             } catch (error: any) {
                 console.log(error);
@@ -420,7 +467,7 @@ function VendaCadastrarView() {
         <Card style={{ 'width': '100%' }} >
             <h5 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                 <p>
-                    Nova Venda
+                    {isEdicao && 'Venda. Cliente: ' + formulario?.cliente + ' Telefone: ' + formulario?.telefone + ' Data: ' + DateUtil.getDataHoraFormatadaToString(formulario?.criadoEm) || "Nova Venda"}
                 </p>
             </h5>
             <Card >
@@ -494,19 +541,31 @@ function VendaCadastrarView() {
                     </div>
 
                     <div className="grid gap-6 mb-6 md:grid-cols-2" >
-                        <div className="mb-2 block">
-                            <Label
-                                htmlFor="moto"
-                                value=""
-                            />
-                            <Asynchronous itens={itens} adicionarItem={adicionarItem} ></Asynchronous>
-                        </div>
 
+                        {status === "aberto"
+                            ? <> <div className="mb-2 block">
+                                <Label
+                                    htmlFor="moto"
+                                    value=""
+                                />
+                                <Asynchronous itens={itens} adicionarItem={adicionarItem} ></Asynchronous>
+                            </div>
 
+                                <div className="mb-2 block">
+                                    <Label
+                                        htmlFor=""
+                                        value=""
+                                    />
+                                    <ProdutoRapidoBtn adicionarItem={adicionarItem}></ProdutoRapidoBtn>
+                                </div>
+                            </>
+                            : <></>
+                        }
 
                     </div>
 
                     <div>
+
                         <TabelaVenda
                             itens={itensTabela}
                             deletar={deletarItem}
@@ -581,9 +640,13 @@ function VendaCadastrarView() {
                     </div>
                 </form>
 
-                <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
-                    <Alert onClose={handleClose} severity="success" sx={{ width: '100%' }}>
-                        This is a success message!
+                <Snackbar open={open} autoHideDuration={6000} anchorOrigin={{ vertical, horizontal }}
+
+                    onClose={handleClose}
+                    message={msgErro}
+                    key={vertical + horizontal}>
+                    <Alert onClose={handleClose} severity="error" sx={{ width: '100%' }}>
+                        {msgErro}
                     </Alert>
                 </Snackbar>
 
@@ -642,7 +705,7 @@ function VendaCadastrarView() {
 
                 </div>
             </Card>
-        </Card>
+        </Card >
     </>);
 }
 

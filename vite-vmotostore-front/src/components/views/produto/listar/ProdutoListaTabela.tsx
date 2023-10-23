@@ -14,10 +14,10 @@ const localizedTextsMap = GRID_PTBR_LOCALE_TEXT;
 export default function ProdutoDataTable(props: any) {
 
     const columns: GridColDef[] = [
-        {
+       /* {
             field: 'id', headerName: 'ID', width: 300, valueGetter: (params: GridValueGetterParams) =>
                 `${params.row._id || ''} ${params.row._id || ''}`
-        },
+        },*/
         {
             field: 'nome', headerName: 'Descrição', width: 400,
         },
@@ -44,8 +44,8 @@ export default function ProdutoDataTable(props: any) {
                 </span>)
             }
         },
-        { field: 'quantidade', headerName: 'Quantidade em estoque', width: 200 },
-        { field: 'quantidadeVenda', headerName: 'Vendido (x)', width: 100 },
+        { field: 'quantidade', headerName: 'Quantidade Estoque', width: 200 },
+        { field: 'quantidadeVenda', headerName: 'Quantidade Vendas', width: 100 },
         {
             field: '_action', headerName: 'Ações', width: 100, renderCell(params) {
 
@@ -86,7 +86,7 @@ export default function ProdutoDataTable(props: any) {
                     },
                 }}
                 pageSizeOptions={[10, 20, 30, 50, 100]}
-                
+
                 localeText={localizedTextsMap}
                 pagination={true}
                 getRowId={generateRowId}

@@ -9,11 +9,11 @@ function CadastroView() {
 
     return (<div style={{ 'width': '100%', 'marginTop': '60px' }}>
 
-        <Grid container spacing={10}>
+        <Grid container spacing={4}>
             <Grid item xs={2}></Grid>
-            <Grid item xs={2}>
 
-                <Card sx={{}}>
+            <Card >
+                <Grid item xs={2}>
                     <Link to={'/produto'}>
                         <CardContent>
                             <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
@@ -34,13 +34,13 @@ function CadastroView() {
                             </Typography>
                         </CardContent>
                     </Link>
-                </Card>
+                </Grid>
+            </Card>
 
-            </Grid>
+            <Card>
+                <Grid item xs={2}>
+                    <Link to={'/home'}>
 
-            <Grid item xs={2}>
-                <Link to={'/home'}>
-                    <Card sx={{}}>
                         <CardContent>
                             <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                                 <br />
@@ -59,13 +59,15 @@ function CadastroView() {
                                 <br />
                             </Typography>
                         </CardContent>
-                    </Card>
-                </Link>
-            </Grid>
 
-            <Grid item xs={2}>
-                <Link to={'/home'}>
-                    <Card sx={{}}>
+                    </Link>
+                </Grid>
+            </Card>
+
+            <Card>
+                <Grid item xs={2}>
+                    <Link to={'/home'}>
+
                         <CardContent>
                             <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                                 <br />
@@ -84,9 +86,10 @@ function CadastroView() {
                                 <br />
                             </Typography>
                         </CardContent>
-                    </Card>
-                </Link>
-            </Grid>
+
+                    </Link>
+                </Grid>
+            </Card>
 
         </Grid>
 

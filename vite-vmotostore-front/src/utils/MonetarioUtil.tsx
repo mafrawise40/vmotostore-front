@@ -32,10 +32,47 @@ class FormatadorMonetario {
 
     //"R$ 13.231.123,29"
     static stringMonetariaToNumber(monetario: string) {
-        let stringMonetaria = monetario.replace('[^0-9,]gm', "");
+        let stringMonetaria = monetario.replace(/[^0-9,]/gm, "");
         stringMonetaria = stringMonetaria.replace(',', ".");
         const number = parseFloat(stringMonetaria);
-        return isNaN(number) ? null : number;
+        return isNaN(number) ? 0 : number;
+    }
+
+    static mascaraMoeda = (event: any) => {
+
+        if (event != null && event != undefined && event != 0 && event != '') {
+
+            let onlyDigits;
+
+            if (isNaN(event)) {
+                if (event.target != undefined && event.target.value != undefined) {
+                    onlyDigits = event.target.value
+                        .split("")
+                        .filter((s: string) => /\d/.test(s))
+                        .join("")
+                        .padStart(3, "0");
+
+            
+                    const digitsFloat = onlyDigits.slice(0, -2) + "." + onlyDigits.slice(-2)
+                    return event.target.value = FormatadorMonetario.maskCurrency(digitsFloat);
+                }
+            } else {
+                onlyDigits = event;
+                return FormatadorMonetario.maskCurrency(onlyDigits);
+            }
+
+
+
+        } else {
+            return "0";
+        }
+    }
+
+    static maskCurrency = (valor: any, locale = 'pt-BR', currency = 'BRL') => {
+        return new Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency
+        }).format(valor)
     }
 
 }

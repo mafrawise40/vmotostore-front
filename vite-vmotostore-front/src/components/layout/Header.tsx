@@ -1,13 +1,13 @@
 'use client';
 
 import { Logout, PersonAdd, Settings } from '@mui/icons-material';
-import { Avatar, Box, Divider, IconButton, ListItemIcon, Menu, MenuItem, Tooltip, Typography } from '@mui/material';
+import { Avatar, Box, Button, Divider, IconButton, ListItemIcon, Menu, MenuItem, Tooltip, Typography } from '@mui/material';
 import React from 'react';
+import Auth from '../../utils/AuthUtils';
 
 
 
 export const Header = () => {
-
 
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -18,6 +18,22 @@ export const Header = () => {
         setAnchorEl(null);
     };
 
+    const logout = () => {
+
+        Auth.destroStorage();
+        setAnchorEl(null);
+
+    }
+
+    const [anchorElRelatorio, setAnchorElRelatorio] = React.useState<null | HTMLElement>(null);
+    const openRelatorio = Boolean(anchorElRelatorio);
+    const handleClickRelatorio = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorElRelatorio(event.currentTarget);
+    };
+    const handleCloseRelatorio = () => {
+        setAnchorElRelatorio(null);
+    };
+
 
     return (
         <div className='container'>
@@ -25,6 +41,17 @@ export const Header = () => {
                 <Typography sx={{ minWidth: 100 }}>Home</Typography>
                 <a href="/venda">Vendas</a>
                 <Typography sx={{ minWidth: 100 }}><a href='/cadastro'>Cadastro</a></Typography>
+
+                <Typography sx={{ minWidth: 100 }}> <Button
+                    id="basic-button"
+                    aria-controls={openRelatorio ? 'basic-menu' : undefined}
+                    aria-haspopup="true"
+                    aria-expanded={openRelatorio ? 'true' : undefined}
+                    onClick={handleClickRelatorio}
+                >
+                    Relatórios
+                </Button></Typography>
+
                 <Tooltip title="Account settings">
                     <IconButton
                         onClick={handleClick}
@@ -34,10 +61,25 @@ export const Header = () => {
                         aria-haspopup="true"
                         aria-expanded={open ? 'true' : undefined}
                     >
-                        <Avatar sx={{ width: 50, height: 32 }}>P</Avatar>
+                        <Avatar sx={{ width: 50, height: 32 }}>O</Avatar>
                     </IconButton>
                 </Tooltip>
             </Box>
+
+
+            <Menu
+                id="basic-menu"
+                anchorEl={anchorElRelatorio}
+                open={openRelatorio}
+                onClose={handleCloseRelatorio}
+                MenuListProps={{
+                    'aria-labelledby': 'basic-button',
+                }}
+            >
+                <MenuItem onClick={handleCloseRelatorio}>Relatório de Vendas</MenuItem>
+            </Menu>
+
+
             <Menu
                 anchorEl={anchorEl}
                 id="account-menu"
@@ -74,29 +116,21 @@ export const Header = () => {
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
                 <MenuItem onClick={handleClose}>
-                    <Avatar /> Profile
+                    <a href='/login/trocar-senha'>
+                        <Avatar /> Trocar Senha
+                    </a>
                 </MenuItem>
-                <MenuItem onClick={handleClose}>
-                    <Avatar /> My account
-                </MenuItem>
+
                 <Divider />
-                <MenuItem onClick={handleClose}>
-                    <ListItemIcon>
-                        <PersonAdd fontSize="small" />
-                    </ListItemIcon>
-                    Add another account
-                </MenuItem>
-                <MenuItem onClick={handleClose}>
-                    <ListItemIcon>
-                        <Settings fontSize="small" />
-                    </ListItemIcon>
-                    Settings
-                </MenuItem>
-                <MenuItem onClick={handleClose}>
-                    <ListItemIcon>
-                        <Logout fontSize="small" />
-                    </ListItemIcon>
-                    Logout
+
+
+                <MenuItem onClick={logout} >
+                    <a href='/login'>
+                        <ListItemIcon>
+                            <Logout fontSize="small" />
+                        </ListItemIcon>
+                        Sair
+                    </a>
                 </MenuItem>
             </Menu>
         </div>

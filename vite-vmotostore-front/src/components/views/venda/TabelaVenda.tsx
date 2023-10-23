@@ -82,8 +82,8 @@ export default function TabelaVenda(props: any) {
                 <>
                     {itens.map((item: ProdutoVenda) => {
                         return (
-                            <Table.Row key={item.produto._id} className="bg-white dark:border-gray-700 dark:bg-gray-800">
-                                <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                            <Table.Row key={item.produto._id} className="">
+                                <Table.Cell className="">
                                     {item.produto?.nome + ' - ' + item.produto?.aplicacao}
                                 </Table.Cell>
                                 <Table.Cell>

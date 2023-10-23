@@ -7,17 +7,19 @@ function App() {
 
 
   return (
+
     <>
+
       <Header></Header>
 
       <div id='content' className="flex items-center justify-center">
-
         <AppRoutes></AppRoutes>
 
       </div>
 
 
       <FooterPage></FooterPage>
+
     </>
 
   )

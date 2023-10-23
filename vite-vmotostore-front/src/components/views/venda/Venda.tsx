@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Alert, ButtonGroup, Container, Grid } from '@mui/material';
+import { Box, ButtonGroup, Container, Grid, Paper, Typography, styled } from '@mui/material';
 import axios from 'axios';
 import { Button, Card, Label, TextInput } from 'flowbite-react';
 import { Badge } from 'flowbite-react';
@@ -9,6 +9,10 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import FormatadorMonetario from '../../../utils/MonetarioUtil';
 import DateUtil from '../../../utils/DateUtils';
+import PhoneAndroidIcon from '@mui/icons-material/PhoneAndroid';
+import SportsMotorsportsIcon from '@mui/icons-material/SportsMotorsports';
+import TwoWheelerIcon from '@mui/icons-material/TwoWheeler';
+import Auth from '../../../utils/AuthUtils';
 
 
 function VendaView() {
@@ -18,6 +22,33 @@ function VendaView() {
     let [itensVenda, setItensVenda] = useState([]);
     let [dataInicio, setDataInicio] = useState(dataHoje);
     let [dataFim, setDataFim] = useState('');
+    let [valorTotalFinalizado, setValorTotalFinalizado] = useState(0);
+    let [valorTotalVendasAbertas, setValorTotalVendasAbertas] = useState(0);
+    let [qtdVendasFinalizadas, setQtdVendasFinalizadas] = useState(0);
+    let [qtdVendasAbertas, setQtdVendasAbertas] = useState(0);
+
+    const calcularValorTotalVendas = (data: any[]) => {
+        let valorTotalVendasFinalizadas = 0;
+        let valorTotalVendasAbertas = 0;
+        let qtdVendasFinalizadas = 0;
+        let qtdVendasAbertas = 0;
+        for (let element of data) {
+
+            if (element.status === 'finalizado') {
+                valorTotalVendasFinalizadas = valorTotalVendasFinalizadas + element.valorTotal;
+                qtdVendasFinalizadas++;
+            }
+
+            if (element.status === 'aberto') {
+                valorTotalVendasAbertas = valorTotalVendasAbertas + element.valorTotal;
+                qtdVendasAbertas++;
+            }
+        }
+        setValorTotalFinalizado(valorTotalVendasFinalizadas);
+        setValorTotalVendasAbertas(valorTotalVendasAbertas);
+        setQtdVendasFinalizadas(qtdVendasFinalizadas);
+        setQtdVendasAbertas(qtdVendasAbertas);
+    }
 
     useEffect(() => {
         // Função para buscar os dados do banco de dados
@@ -25,14 +56,21 @@ function VendaView() {
             try {
                 const hoje = new Date(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())).toISOString().slice(0, 10);
                 const dadosDoFormulario = { dataInicio: hoje, dataFim: '' };
-                const response = await axios.post('http://localhost:3000/venda/filtro', dadosDoFormulario);
-                
-                setItensVenda(response.data); // Atualize o estado com os dados recuperados
 
+
+
+
+                const response = await axios.post(`${import.meta.env.VITE_URL_BACK_NODE}/venda/filtro`, dadosDoFormulario, Auth.getHeaderAuth());
+
+
+                setItensVenda(response.data); // Atualize o estado com os dados recuperados
+                calcularValorTotalVendas(response.data);
             } catch (error: any) {
-                return (<Alert severity="error">{error}</Alert>)
+                console.log(error);
             }
         };
+
+
 
         getVendas(); // Chame a função para buscar os dados quando o componente for montado
     }, []); // O segundo argumento vazio [] garante que isso só será executado uma vez, após a montagem inicial
@@ -41,7 +79,9 @@ function VendaView() {
     let finalizarVenda = async (id: number, index: number) => {
         try {
             const dadosDoFormulario = { status: 'finalizado' };
-            const response = await axios.put('http://localhost:3000/venda/' + id, dadosDoFormulario); // Substitua pela URL da sua API
+
+
+            const response = await axios.put(`${import.meta.env.VITE_URL_BACK_NODE}/venda/` + id, dadosDoFormulario, Auth.getHeaderAuth()); // Substitua pela URL da sua API
 
             if (response.status === 201) {
                 setItensVenda((prevState: any) =>
@@ -59,10 +99,15 @@ function VendaView() {
 
     let pesquisar = async () => {
 
+
         try {
+
             const dadosDoFormulario = { dataInicio: dataInicio, dataFim: dataFim };
-            const response = await axios.post('http://localhost:3000/venda/filtro', dadosDoFormulario);
+            const response = await axios.post(`${import.meta.env.VITE_URL_BACK_NODE}/venda/filtro`, dadosDoFormulario, Auth.getHeaderAuth());
             setItensVenda(response.data);
+            calcularValorTotalVendas(response.data);
+
+            console.log(response.data);
 
         } catch (error: any) {
             console.log(error);
@@ -70,19 +115,22 @@ function VendaView() {
     }
 
 
+    const Item = styled(Paper)(({ theme }) => ({
+        backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
+        ...theme.typography.body2,
+        padding: theme.spacing(1),
+        textAlign: 'center',
+        color: theme.palette.text.secondary,
+    }));
 
-    const estiloCentro = {
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center' // Define o alinhamento horizontal como centro
-    };
 
     return (<>
-        <Card className=""
+
+        <Card className="" style={{ 'width': '100%', 'marginTop': '60px' }}
             href="#"
         >
             <h5 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                <p style={estiloCentro}>
+                <p style={{ 'alignItems': 'center', 'justifyContent': 'center', 'textAlign': 'center' }}>
                     Vendas
                 </p>
             </h5>
@@ -140,110 +188,121 @@ function VendaView() {
                                 </ButtonGroup>
 
                             </div>
+                            <div className="mb-2 block">
+                                <Item> <Link to="/venda/cadastrar" className="inline-flex w-full justify-center rounded-lg bg-cyan-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-cyan-700 focus:outline-none focus:ring-4 focus:ring-cyan-200 dark:focus:ring-cyan-900">Nova Venda</Link></Item>
+                            </div>
                         </div>
-
-
 
 
                         <div className="mb-2 block"></div>
 
-
-
                         <div className="grid gap-6 mb-6 md:grid-cols-2">
-
-
 
                         </div>
                     </form>
                 </Container>
             </Card>
+            <Card>
+                <Box sx={{ flexGrow: 1 }}>
+                    <Grid sx={{ flexGrow: 1 }}>
+                        <Grid container item spacing={1}  >
+                            <Badge color="gray">  <Typography variant="subtitle2" display="block" gutterBottom>
+                                Vendas a partir do dia: <b>{DateUtil.getStringDataToString(dataInicio)} {dataFim && " até o dia " + DateUtil.getStringDataToString(dataFim) || ' até esse exato momento.'} </b>
+                            </Typography> </Badge>
+                        </Grid>
+                        <Grid container item spacing={0}  >
+                            <Badge color="success">Total de Vendas: {itensVenda.length || 0} </Badge>
+                            <Badge color="success">Total de Vendas em aberto: {qtdVendasAbertas || 0} </Badge>
+                            <Badge color="success">Valor Total de Vendas Abertas: {FormatadorMonetario.mascaraMoeda(valorTotalVendasAbertas)}</Badge>
 
-            <Link to="/venda/cadastrar" className="inline-flex w-full justify-center rounded-lg bg-cyan-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-cyan-700 focus:outline-none focus:ring-4 focus:ring-cyan-200 dark:focus:ring-cyan-900">Nova Venda</Link>
+                        </Grid>
+                        <Grid container item spacing={0}  >
+                            <Badge color="info">Total de Vendas em Finalizadas: <b>{qtdVendasFinalizadas || 0}</b></Badge>
+                            <Badge color="info">Valor Total de Vendas Finalizadas: <b>{FormatadorMonetario.mascaraMoeda(valorTotalFinalizado)} </b></Badge>
+                        </Grid>
 
-            <div className="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-5 gap-4">
+                    </Grid>
+                </Box>
+            </Card>
+
+
+
+
+            <Grid container spacing={2} >
 
 
                 {(itensVenda !== null && itensVenda !== undefined && itensVenda.length > 0) ? itensVenda.map((item: any, index: number) => {
-                    return (
-                        <Card key={item._id}>
-                            <Badge color="gray">{DateUtil.getDataHoraFormatadaToString(item.criadoEm)}</Badge>
-                            {item.status === 'aberto' ? <><Badge color="success">Aberto</Badge></> :
-                                item.status === 'finalizado' ? <><Badge color="info">Finalizado</Badge></> : <><Badge color="failure">Cancelado</Badge></>
-                            }
+                    return (<>
+                        <Grid   >
+                            <Card key={item._id} >
 
-                            <h5 className="mb-4 text-xl font-medium text-gray-500 dark:text-gray-400">
-                                {item.cliente?.nome}
-                            </h5>
-
-                            <p className="font-normal text-gray-700 dark:text-gray-400">
-                                {item.cliente?.telefone}
-                            </p>
-                            <p className="font-normal text-gray-700 dark:text-gray-400">
-                                {item?.modeloMoto}
-                            </p>
-
-
-
-                            <ul className="my-7 space-y-5">
-                                {item.produtos.map((produtos: any) => {
-                                    return (<>
-                                        <li className="flex space-x-3" >
-                                            <span className="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">
-                                                <b> {produtos.quantidade} x</b> {produtos.produto.nome}  <b>{FormatadorMonetario.formatarValorMonetario(produtos.produto.precoVenda, "R$")} </b>
-                                            </span>
-                                        </li>
-                                    </>
-                                    )
+                                <Badge color="gray">{DateUtil.getDataHoraFormatadaToString(item.criadoEm)}</Badge>
+                                {item.status === 'aberto' ? <><Badge color="success">Aberto</Badge></> :
+                                    item.status === 'finalizado' ? <><Badge color="info">Finalizado</Badge></> : <><Badge color="failure">Cancelado</Badge></>
                                 }
-                                )}
-                            </ul>
-
-
-                            <div>
-                                Desconto: {FormatadorMonetario.formatarValorMonetario(item.descontoNoValorTotal, "R$")}
-                            </div>
-
-                            <div className="flex items-baseline text-gray-900 dark:text-white">
-                                <span className="text-3xl font-semibold">
-                                    R$
-                                </span>
-                                <span className="text-5xl font-extrabold tracking-tight">
-                                    {FormatadorMonetario.formatarValorMonetario(item.valorTotal, "")}
-                                </span>
-                                <span className="ml-1 text-xl font-normal text-gray-500 dark:text-gray-400">
-                                    total
-                                </span>
-                            </div>
-
-                            <Link to={"/venda/" + item._id + '/editar'}
-                                className="inline-flex w-full justify-center rounded-lg bg-cyan-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-cyan-700 focus:outline-none focus:ring-4 focus:ring-cyan-200 dark:focus:ring-cyan-900"
-                                type="button"
-                            >
-                                <p>
-                                    Editar
+                                <h5 style={{ 'color': 'black', 'fontWeight': 'bold' }} className="mb-4 text-xl font-medium text-gray-500 dark:text-gray-400">
+                                    <SportsMotorsportsIcon color='primary'></SportsMotorsportsIcon> {item.cliente?.nome}
+                                </h5>
+                                <p className="font-normal text-gray-700 dark:text-gray-400">
+                                    <PhoneAndroidIcon color='success'></PhoneAndroidIcon> {item.cliente?.telefone}
                                 </p>
-                            </Link>
-                            <button onClick={() => {
-                                finalizarVenda(item._id, index);
-                            }}
-                                className="inline-flex w-full justify-center rounded-lg bg-cyan-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-cyan-700 focus:outline-none focus:ring-4 focus:ring-cyan-200 dark:focus:ring-cyan-900"
-                                type="button"
-                            >
+                                <p className="font-normal text-gray-700 dark:text-gray-400">
+                                    <TwoWheelerIcon color='error'></TwoWheelerIcon> {item?.modeloMoto}
+                                </p>
 
-                                Finalizar
 
-                            </button>
 
-                        </Card >
+                                <ul className="my-7 space-y-5">
+                                    {item.produtos.map((produtos: any) => {
+                                        return (<>
+                                            <li className="flex space-x-3" >
+                                                <span className="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">
+                                                    <b> {produtos.quantidade} x</b> {produtos?.produto?.nome}  <b>{FormatadorMonetario.formatarValorMonetario(produtos?.produto?.precoVenda, "R$")} </b>
+                                                </span>
+                                            </li>
+                                        </>
+                                        )
+                                    }
+                                    )}
+                                </ul>
 
-                    )
+
+                                <div>
+                                    Desconto: {FormatadorMonetario.formatarValorMonetario(item.descontoNoValorTotal, "R$")}
+                                </div>
+
+                                <div className="flex items-baseline text-gray-900 dark:text-white">
+                                    <span className="text-3xl font-semibold">
+                                        R$
+                                    </span>
+                                    <span className="text-5xl font-extrabold tracking-tight">
+                                        {FormatadorMonetario.formatarValorMonetario(item.valorTotal, "")}
+                                    </span>
+                                    <span className="ml-1 text-xl font-normal text-gray-500 dark:text-gray-400">
+                                        total
+                                    </span>
+                                </div>
+
+                                <Link to={"/venda/" + item._id + '/editar'}
+                                    className="inline-flex w-full justify-center rounded-lg bg-cyan-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-cyan-700 focus:outline-none focus:ring-4 focus:ring-cyan-200 dark:focus:ring-cyan-900"
+                                    type="button"
+                                >
+                                    <p>
+                                        Editar
+                                    </p>
+                                </Link>
+
+
+                            </Card >
+                        </Grid>
+                    </>)
                 }
 
                 ) : <></>}
 
+            </Grid >
 
 
-            </div>
         </Card >
 
 

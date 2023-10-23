@@ -1,5 +1,5 @@
 import { Box, Button, ButtonGroup, Typography } from "@mui/material";
-import { Card, Label, TextInput } from "flowbite-react";
+import { Card } from "flowbite-react";
 import ProdutoDataTable from "./ProdutoListaTabela";
 import { useNavigate } from "react-router-dom";
 
@@ -10,24 +10,14 @@ function ProdutoListaComponentsView(props: any) {
         return (
             <Card>
                 <form className="">
-
-
                     <div className="grid gap-6 mb-2 md:grid-cols-2">
-
-
                         <div className="mb-2 block">
                             <br />
                             <ButtonGroup variant="contained" aria-label="outlined primary button group">
-
-
                                 <Button type='button' onClick={() => { navigate('/produto/cadastrar') }}   >Novo Produto</Button>
                             </ButtonGroup>
-
                         </div>
                     </div>
-
-
-
                 </form>
             </Card>
 
